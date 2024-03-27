@@ -48,16 +48,22 @@ def save_summary(expid, df, header, args):
         f.write(' '.join([str(s) for s in summary]) + '\n')
         
 
-def make_inst_cat(df, header, catdir,  dust=True):
+def make_inst_cat(df, header, catdir,  dust=True, pair=None):
     """Make a instance catalog based on TRILEGAL dataframe.
     
     Dataframe columns must include ra, dec, av, and gmag."""
     print("Assembling catalog...\n")
 
     expid = "00"+str(int(header["obshistid"]))
+    if pair is not None:
+        pair = '_p' + str(pair)
+    else:
+        pair = ''
+
     # for now, same SED file for everyone
     sedpath = 'starSED/phoSimMLT/lte035-4.5-1.0a+0.4.BT-Settl.spec.gz'
-    fname = f'instcat_trilegal_{expid}{"" if dust else "_nodust"}.txt'
+
+    fname = f'instcat_trilegal{pair}_{expid}{"" if dust else "_nodust"}.txt'
     fname = catdir + fname
 
     # open file in append mode
@@ -65,7 +71,7 @@ def make_inst_cat(df, header, catdir,  dust=True):
         _ = open(fname, 'r')
 
         # if we can open the instant catalog, then it exists -> need a new file.
-        fname = f'instcat_trilegal_{expid}{"" if dust else "_nodust"}_{int(np.random.uniform(1000))}.txt'
+        fname = f'instcat_trilegal{pair}_{expid}{"" if dust else "_nodust"}_{int(np.random.uniform(1000))}.txt'
         fname = catdir + fname
         print(f'file already exists, saving under: {fname}\n')
         instCat = open(fname, 'a')
