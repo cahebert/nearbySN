@@ -35,9 +35,14 @@ def plot_stars(df, header):
 
 
 def plot_galactic_coord(l, b):
+    from astropy import units as u
+    from astropy.coordinates import SkyCoord
+    
+    gc_galactic = SkyCoord(frame='galactic', l=l*u.degree, b=b*u.degree)
+    
     plt.subplot(111, projection='aitoff')
     plt.grid(True, zorder=2)
-    plt.scatter(l.wrap_at('180d').radian, b.radian, s=10, marker='o', zorder=3)
+    plt.scatter(gc_galactic.l.wrap_at('180d').radian, gc_galactic.b.radian, s=10, marker='o', zorder=3)
     plt.xlabel('longitude l')
     plt.ylabel('latitude b')
     
