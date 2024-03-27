@@ -1,7 +1,4 @@
-# import matplotlib.pyplot as plt
-# plt.style.use('./clem.mplstyle')
 import numpy as np
-
 
 def query_data_lab(ra_min, ra_max, dec_min, dec_max, N, expid, save=True):
     from dl import queryClient as qc
@@ -25,7 +22,7 @@ def query_data_lab(ra_min, ra_max, dec_min, dec_max, N, expid, save=True):
                       verbose=1)
     
     if save:
-        np.savetxt(f'gc_instcats/gc_values_{expid}.txt', np.array(result['gc']))
+        np.savetxt(f'{args.catdir}/gc_values_{expid}.txt', np.array(result['gc']))
                
     return result
 
@@ -46,12 +43,12 @@ def save_summary(expid, df, header, args):
         len(df[df['gc']==4]) / len(df),
     ]
     
-    summary_f = './gc_instcats/pointing_summaries.txt'
+    summary_f = f'{args.catdir}/pointing_summaries.txt'
     with open(summary_f, 'a') as f:
         f.write(' '.join([str(s) for s in summary]) + '\n')
         
 
-def make_inst_cat(df, header, dust=True):
+def make_inst_cat(df, header, catdir,  dust=True):
     """Make a instance catalog based on TRILEGAL dataframe.
     
     Dataframe columns must include ra, dec, av, and gmag."""
@@ -61,7 +58,7 @@ def make_inst_cat(df, header, dust=True):
     # for now, same SED file for everyone
     sedpath = 'starSED/phoSimMLT/lte035-4.5-1.0a+0.4.BT-Settl.spec.gz'
     fname = f'instcat_trilegal_{expid}{"" if dust else "_nodust"}.txt'
-    fname = 'gc_instcats/' + fname
+    fname = catdir + fname
 
     # open file in append mode
     try:
@@ -69,7 +66,7 @@ def make_inst_cat(df, header, dust=True):
 
         # if we can open the instant catalog, then it exists -> need a new file.
         fname = f'instcat_trilegal_{expid}{"" if dust else "_nodust"}_{int(np.random.uniform(1000))}.txt'
-        fname = 'gc_instcats/' + fname
+        fname = catdir + fname
         print(f'file already exists, saving under: {fname}\n')
         instCat = open(fname, 'a')
 
@@ -90,16 +87,13 @@ def make_inst_cat(df, header, dust=True):
 
     instCat.close()
 
-    print(f"Successfully written catalog of length {len(df)} to file {'gc_instcats/' + fname}.\n")
+    print(f"Successfully written catalog of length {len(df)} to file {fname}.\n")
     return fname
 
 
 def plot_stars(df, header):
-    import matplotlib.pyplot as plt
     from matplotlib.lines import Line2D
-    plt.style.use('./clem.mplstyle')
-    import seaborn as sns
-
+    
     f, a = plt.subplots(1,2, figsize=(8,4), gridspec_kw={'width_ratios':[1,0.6]})
     # thin disk=1, thick disk=2, halo=3, bulge=4
 
@@ -138,7 +132,7 @@ def main(args):
     dec_min, dec_max = dec - args.window, dec + args.window
     
     # OpSim query
-    ops_visit = opsim_pointing.get_opsim_visit(ra, dec)
+    ops_visit = opsim_pointing.get_opsim_visit(ra, dec, args.db)
     ops_header = opsim_pointing.assemble_instcat_header(ops_visit,
                                                         seed=args.seed,
                                                         filter_=args.filter)
@@ -149,9 +143,13 @@ def main(args):
     
     save_summary(expid, out, ops_header, args)
     if not args.noplot:
+        import matplotlib.pyplot as plt
+        plt.style.use(args.mplstyle)
+        import seaborn as sns
+        
         plot_stars(out, ops_header)
         
-    make_inst_cat(out, header=ops_header, dust=args.dust)
+    make_inst_cat(out, header=ops_header, catdir=args.catdir, dust=args.dust)
 
 
 def get_args():
@@ -166,6 +164,9 @@ def get_args():
     parser.add_argument('--window', default=0.12, type=float)
     parser.add_argument('--dust', default=True, action='store_false')
     parser.add_argument('--noplot', default=False, action='store_true')
+    parser.add_argument('--catdir', default='./instcats')
+    parser.add_argument('--db', default='~/Documents/share/sim_basline/baseline_v3.3_10yrs.db')
+    parser.add_argument('--mplstyle', default='~/Documents/clem.mplstyle')
     args = parser.parse_args()
     return args
     
