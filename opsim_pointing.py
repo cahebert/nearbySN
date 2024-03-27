@@ -1,5 +1,3 @@
-import matplotlib.pyplot as plt
-    
 def get_celestial_coord(l, b):
     from astropy import units as u
     from astropy.coordinates import SkyCoord
@@ -8,17 +6,6 @@ def get_celestial_coord(l, b):
     gc_celestial = gc_galactic.icrs
     
     return gc_celestial.ra.degree, gc_celestial.dec.wrap_at('180d').degree
-
-    
-def plot_galactic_coord(l, b):
-    plt.subplot(111, projection='aitoff')
-    plt.grid(True, zorder=2)
-    plt.scatter(l.wrap_at('180d').radian, b.radian, s=10, marker='o', zorder=3)
-    plt.xlabel('longitude l')
-    plt.ylabel('latitude b')
-    
-    plt.savefig('plots/galactic_coord.png', dpi=150)
-    
     
 def get_opsim_visit(GC_RA, GC_DEC, db_path):
     import sqlite3
