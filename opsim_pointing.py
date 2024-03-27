@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+    
 def get_celestial_coord(l, b):
     from astropy import units as u
     from astropy.coordinates import SkyCoord
@@ -9,25 +11,22 @@ def get_celestial_coord(l, b):
 
     
 def plot_galactic_coord(l, b):
-    import matplotlib.pyplot as plt
-    plt.style.use('./clem.mplstyle')
-
     plt.subplot(111, projection='aitoff')
     plt.grid(True, zorder=2)
-    plt.scatter(gc_galactic.l.wrap_at('180d').radian, gc_galactic.b.radian, s=10, marker='o', zorder=3)
+    plt.scatter(l.wrap_at('180d').radian, b.radian, s=10, marker='o', zorder=3)
     plt.xlabel('longitude l')
     plt.ylabel('latitude b')
     
-    plt.savefig('./plots/galactic_coord.png', dpi=150)
+    plt.savefig('plots/galactic_coord.png', dpi=150)
     
     
-def get_opsim_visit(GC_RA, GC_DEC):
+def get_opsim_visit(GC_RA, GC_DEC, db_path):
     import sqlite3
     import pandas as pd
     import numpy as np
 
-    baseline_db = '/gpfs02/astro/workarea/esheldon/rubin_sim_data/opsim-databases/baseline_v3.3_10yrs.db'
-    con = sqlite3.connect(baseline_db)
+    # baseline_db = '/gpfs02/astro/workarea/esheldon/rubin_sim_data/opsim-databases/baseline_v3.3_10yrs.db'
+    con = sqlite3.connect(db_path)
 
     # Some of the columns you might be interested in
     cols = ['observationStartMJD', 'observationId', 'seeingFwhm500']
