@@ -108,6 +108,7 @@ def main(args):
     ops_visit = opsim_pointing.get_opsim_visit(ra, dec, args.db)
     ops_header = opsim_pointing.assemble_instcat_header(ops_visit,
                                                         seed=args.seed,
+                                                        exptime_=args.exptime
                                                         filter_=args.filter)
     expid = "00"+str(int(ops_header["obshistid"]))
     
@@ -132,6 +133,7 @@ def get_args():
     parser.add_argument('--l', default=0, type=float)
     parser.add_argument('--b', default=0, type=float)
     parser.add_argument('--seed', default=23526, type=int)
+    parser.add_argument('--exptime', default=15., type=float)
     parser.add_argument('--filter', default=2, type=int)
     parser.add_argument('--N', default=100000, type=int)
     parser.add_argument('--window', default=0.12, type=float)
