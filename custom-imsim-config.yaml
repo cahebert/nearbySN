@@ -67,23 +67,23 @@ input:
         exptime: $exptime
         mjd: { type: OpsimData, field: mjd }
 
-#     atm_psf:
-#         # This enables the AtmosphericPSF type for the PSF
+    atm_psf:
+        # This enables the AtmosphericPSF type for the PSF
 
-#         # The first 4 items are required.
-#         airmass: { type: OpsimData, field: airmass }
-#         rawSeeing:  { type: OpsimData, field: rawSeeing }
-#         band: "$band"
-#         boresight: "$boresight"
+        # The first 4 items are required.
+        airmass: { type: OpsimData, field: airmass }
+        rawSeeing:  { type: OpsimData, field: rawSeeing }
+        band: "$band"
+        boresight: "$boresight"
 
-#         # Optional parameters:  (Unless otherwise stated, these are the default values.)
-#         t0: 0               # seconds
-#         exptime: $exptime
-#         kcrit: 0.2          # in units of 1/r0
-#         screen_size: 819.2  # To use less memory for testing/development, you can try 409.6
-#         screen_scale: 0.1   # meters
-#         doOpt: False
-#         nproc: 1            # Default (None) means one proc per screen.
+        # Optional parameters:  (Unless otherwise stated, these are the default values.)
+        t0: 0               # seconds
+        exptime: $exptime
+        kcrit: 0.2          # in units of 1/r0
+        screen_size: 409.6  # To use less memory for testing/development, you can try 409.6
+        screen_scale: 0.1   # meters
+        doOpt: False
+        nproc: 1            # Default (None) means one proc per screen.
 
 #         # TODO:
 #         #save_file: {}        # This is currently set of the imsim command line, so we could keep
@@ -212,6 +212,7 @@ image:
 psf:
     type: Convolve
     items:
+        -   type: AtmosphericPSF
         -
             # An additional Gaussian profile to represent contributions of physical effects
             # not otherwise explicitly modeled in either the Optical or Atmospheric parts.
@@ -219,7 +220,7 @@ psf:
             # being modeled. If this is not the case, then it may be appropriate to increase
             # this value to account for the missing contribution of these effects.
             type: Gaussian
-            fwhm: 0.7
+            fwhm: 0.3
 
 stamp:
     type: LSST_Silicon
