@@ -1,15 +1,13 @@
 import numpy as np
 
-def query_data_lab(ra_min, ra_max, dec_min, dec_max, N, expid, save=True):
-    from dl import queryClient as qc
-
+def query_data_lab(healpix, N, expid=None, magcut=None, save=False):
     """Fetch TRILEGAL positions and gmag for a given ra/dec region."""
     query = \
        """SELECT ra, dec, av, gmag, gc 
           FROM lsst_sim.simdr2
-          WHERE (ra BETWEEN {} AND {} AND dec BETWEEN {} AND {})
+          WHERE (ring256={} AND label!=9 {})
           LIMIT {}
-          """.format(ra_min, ra_max, dec_min, dec_max, N)
+          """.format(healpix, magstring, N)
 
     print("Submitting request:\n")
     print(query)
@@ -136,9 +134,11 @@ def main(args):
     import opsim_pointing
     ra, dec = opsim_pointing.get_celestial_coord(args.l, args.b)
     
-    # window argument should be in degrees
-    ra_min, ra_max = ra - args.window, ra + args.window
-    dec_min, dec_max = dec - args.window, dec + args.window
+    import healpy
+    healpix = healpy.ang2pix(256, theta=args.l, phi=args.b, lonlat=True)
+    # # window argument should be in degrees
+    # ra_min, ra_max = ra - args.window, ra + args.window
+    # dec_min, dec_max = dec - args.window, dec + args.window
     
     # OpSim query
     ops_visit = opsim_pointing.get_opsim_visit(ra, dec, args.db)
@@ -149,7 +149,7 @@ def main(args):
     expid = "00"+str(int(ops_header["obshistid"]))
     
     # TRILEGAL query
-    out = query_data_lab(ra_min, ra_max, dec_min, dec_max, args.N, expid)    
+    out = query_data_lab(healpix, args.N)  
     
     save_summary(expid, out, ops_header, args)
     if not args.noplot:

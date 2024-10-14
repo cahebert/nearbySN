@@ -45,6 +45,9 @@ if __name__ == '__main__':
     # convert to celestial coords
     ra, dec = opsim_util.get_celestial_coord(args.l, args.b)
 
+    import healpy
+    healpix = healpy.ang2pix(256, theta=args.l, phi=args.b, lonlat=True)
+
     # query baseline for visits near that spot, choose pair close together and with few day lag
     visit_1, visit_2 = opsim_util.get_opsim_visit_pair(ra, dec, args.db)
     
@@ -61,11 +64,11 @@ if __name__ == '__main__':
     header_2['rightascension'] = new_ra + (1/360) * np.sqrt(2)
     header_2['declination'] = new_dec + (1/360) * np.sqrt(2)
 
-    # query rubin_sim for stars that fall within 1 + sqrt(2) * CCD area of the observation center
-    ra_min, ra_max = new_ra - args.window * (1 + np.sqrt(2)), new_ra + args.window * (1 + np.sqrt(2))
-    dec_min, dec_max = new_dec - args.window * (1 + np.sqrt(2)), new_dec + args.window * (1 + np.sqrt(2))
+    # # query rubin_sim for stars that fall within 1 + sqrt(2) * CCD area of the observation center
+    # ra_min, ra_max = new_ra - args.window * (1 + np.sqrt(2)), new_ra + args.window * (1 + np.sqrt(2))
+    # dec_min, dec_max = new_dec - args.window * (1 + np.sqrt(2)), new_dec + args.window * (1 + np.sqrt(2))
     
-    out = rubin_sim_util.query_data_lab(ra_min, ra_max, dec_min, dec_max, args.N, expid=None, save=False)    
+    out = rubin_sim_util.query_data_lab(healpix, args.N, magcut=args.magcut, save=False)    
 
     # dump into .txt with the instcat headers above
     if args.pair is not None:
