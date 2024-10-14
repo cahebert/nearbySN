@@ -36,7 +36,7 @@ def save_summary(expid, df, header, args):
         args.l,
         args.b,
         len(df),
-        len(df[df['gmag']<24.5]),
+        # len(df[df['imag']<24.5]),
         len(df[df['gc']==1]) / len(df),
         len(df[df['gc']==2]) / len(df),
         len(df[df['gc']==3]) / len(df),
@@ -47,30 +47,30 @@ def save_summary(expid, df, header, args):
     with open(summary_f, 'a') as f:
         f.write(' '.join([str(s) for s in summary]) + '\n')
 
-def get_sed_info(star, etoiles, sed_path='/Users/clairealice/Documents/share/rubin_sim_data/sims_sed_library/'):
+def get_sed_info(star, etoiles, index, sed_path='/Users/clairealice/Documents/share/rubin_sim_data/sims_sed_library/'):
     """Returns magnorm and path to file for SED of given star.
     
     star is dict or row of dataframe."""
-    import pylumiere
+    import galsim
+    import astropy.units as u
+    import astropy.constants
+
     sed_cols = ['logte','logg','logl','z']
     sed = etoiles.get_intrinsic_sed(**star[sed_cols].to_dict())
     sed = etoiles.convert_to_observed(sed, star['mu0'])
 
     lams = np.linspace(sed.blue_limit, 1500, 2000)
-    fname = f'lsstsim_sample/btsettl_sed_index{row}.txt'
+    fname = f'lsstsim_sample/nsn_sed_index{index}.txt'
     with open(sed_path + fname, 'w+') as f:
-        f.writelines(f'{l} {f}\n' for l,f in zip(lams, sed(lams)))
-    
-    delta500AB = galsim.Bandpass("1", 
-                                 wave_type='nm',
-                                 blue_limit=498,
-                                 red_limit=502
-                                 )
-    delta500AB = delta500AB.withZeropoint("AB")
-    
-    magnorm = sed.calculateMagnitude(delta500AB)
+        f.writelines(f'{l} {f}\n' for l,f in zip(lams, sed._spec(lams)))
 
-    return magnorm, fname
+    wl = 500*u.nm
+    hnu0 = (astropy.constants.h*astropy.constants.c)/wl
+    flambda0 = hnu0 * sed(wl.value) * (1./u.nm/u.cm**2/u.s)
+    fnu0 = flambda0 * wl**2 / astropy.constants.c
+    magnorm = fnu0.to_value(u.ABmag)
+    
+    return magnorm, fname    
 
         
 
@@ -78,6 +78,7 @@ def make_inst_cat(df, header, catdir,  dust=True, pair=None):
     """Make a instance catalog based on TRILEGAL dataframe.
     
     Dataframe columns must include ra, dec, av, and gmag."""
+    import pylumiere
     print("Assembling catalog...\n")
 
     expid = "00"+str(int(header["obshistid"]))
@@ -109,15 +110,22 @@ def make_inst_cat(df, header, catdir,  dust=True, pair=None):
     for key, val in header.items():
         instCat.write(f'{key} {val}\n')
 
-    etoiles = pylumiere.Stellib('BTSettl', rv=3.1, dustmodel='O94')
-    # now write objects
-    for row in df.index:
-        df_row = df.loc[row]
-        magnorm, sedpath = get_sed_info(df_row, etoiles)
-        to_write = f"object {row} {df_row['ra']} {df_row['dec']} {magnorm} {sedpath} " + \
-                   f"0 0 0 0 0 0 point none CCM " + \
-                   f"{df_row['av'] if dust else 0} 3.1\n"
-        instCat.write(to_write)
+    if write_stars:
+        etoiles = pylumiere.Stellib('BTSettl', rv=3.1, dustmodel='O94')
+        # now write objects
+        for row in df.index:
+            df_row = df.loc[row]
+            if randomize:
+                ra, dec = np.random.uniform(low=-0.1, high=0.1, size=2)
+                ra += header['rightascension']
+                dec += header['declination']
+            else:
+                ra, dec = df_row['ra'], df_row['dec']
+            magnorm, sedpath = get_sed_info(df_row, etoiles, row)
+            to_write = f"object {row} {ra} {dec} {magnorm} {sedpath} " + \
+                    f"0 0 0 0 0 0 point none CCM " + \
+                    f"{df_row['av'] if dust else 0} 3.1\n"
+            instCat.write(to_write)
 
     instCat.close()
 

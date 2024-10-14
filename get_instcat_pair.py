@@ -10,11 +10,14 @@ def get_args():
     parser.add_argument('--l', default=40, type=float)
     parser.add_argument('--b', default=-15, type=float)
     parser.add_argument('--seed', default=23526, type=int)
-    parser.add_argument('--filter', default=2, type=int)
+    parser.add_argument('--exptime', default=15., type=float)
+    parser.add_argument('--filter', default=3, type=int)
     parser.add_argument('--N', default=100000, type=int)
     parser.add_argument('--window', default=0.12, type=float)
     parser.add_argument('--dust', default=True, action='store_false')
     parser.add_argument('--noplot', default=False, action='store_true')
+    parser.add_argument('--randomize', default=False, action='store_true')
+    parser.add_argument('--magcut', default=None)
     parser.add_argument('--catdir', default='./instcats/')
     parser.add_argument('--pair', default=None)
     parser.add_argument('--db', default='/Users/clairealice/Documents/share/sim_baseline/baseline_v3.3_10yrs.db')
@@ -46,8 +49,8 @@ if __name__ == '__main__':
     visit_1, visit_2 = opsim_util.get_opsim_visit_pair(ra, dec, args.db)
     
     # make header for both cats
-    header_1 = opsim_util.assemble_instcat_header(visit_1, seed=int(rng.uniform()*1000))
-    header_2 = opsim_util.assemble_instcat_header(visit_2, seed=int(rng.uniform()*1000))
+    header_1 = opsim_util.assemble_instcat_header(visit_1, seed=int(rng.uniform()*1000), exptime_=args.exptime)
+    header_2 = opsim_util.assemble_instcat_header(visit_2, seed=int(rng.uniform()*1000), exptime_=args.exptime)
     
     # artificially tweak ra/dec to be separated by just 10 arcsec (=.00278 deg) dither
     new_ra = np.mean([header_1['rightascension'], header_2['rightascension']])
@@ -69,8 +72,9 @@ if __name__ == '__main__':
         pair = args.pair
     else:
         pair = str(int(np.random.uniform() * 1000))
-    rubin_sim_util.make_inst_cat(out, header=header_1, catdir=args.catdir, dust=args.dust, pair=pair)
-    rubin_sim_util.make_inst_cat(out, header=header_2, catdir=args.catdir, dust=args.dust, pair=pair)
+
+    np.savetxt(args.catdir+f'imags_p{pair}.txt', out['imag'].to_numpy())
+    
 
     # launch imsim for both
     # run alignment
