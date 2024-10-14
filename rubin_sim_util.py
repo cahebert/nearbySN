@@ -2,8 +2,11 @@ import numpy as np
 
 def query_data_lab(healpix, N, expid=None, magcut=None, save=False):
     """Fetch TRILEGAL positions and gmag for a given ra/dec region."""
+    from dl import queryClient as qc
+    magstring = f'AND imag<{magcut}' if magcut is not None else ''
+
     query = \
-       """SELECT ra, dec, av, gmag, gc 
+       """SELECT ra, dec, av, imag, gc, logte, logg, logl, mu0, z
           FROM lsst_sim.simdr2
           WHERE (ring256={} AND label!=9 {})
           LIMIT {}
@@ -18,6 +21,8 @@ def query_data_lab(healpix, N, expid=None, magcut=None, save=False):
                       wait=True,
                       poll=15,
                       verbose=1)
+
+    print(f"Request complete: catalog length {len(result)}")
     
     if save:
         np.savetxt(f'{args.catdir}/gc_values_{expid}.txt', np.array(result['gc']))
@@ -70,9 +75,9 @@ def get_sed_info(star, etoiles, index, sed_path='/Users/clairealice/Documents/sh
     
     return magnorm, fname    
 
-        
-
-def make_inst_cat(df, header, catdir,  dust=True, pair=None):
+def make_inst_cat(df, header, catdir,  
+                  magcut=True, randomize=True, 
+                  dust=True, pair=None, write_stars=True):
     """Make a instance catalog based on TRILEGAL dataframe.
     
     Dataframe columns must include ra, dec, av, and gmag."""
@@ -131,8 +136,8 @@ def make_inst_cat(df, header, catdir,  dust=True, pair=None):
     return fname
 
 def main(args):
-    import opsim_pointing
-    ra, dec = opsim_pointing.get_celestial_coord(args.l, args.b)
+    import opsim_util
+    ra, dec = opsim_util.get_celestial_coord(args.l, args.b)
     
     import healpy
     healpix = healpy.ang2pix(256, theta=args.l, phi=args.b, lonlat=True)
@@ -141,8 +146,8 @@ def main(args):
     # dec_min, dec_max = dec - args.window, dec + args.window
     
     # OpSim query
-    ops_visit = opsim_pointing.get_opsim_visit(ra, dec, args.db)
-    ops_header = opsim_pointing.assemble_instcat_header(ops_visit,
+    ops_visit = opsim_util.get_opsim_visit(ra, dec, args.db)
+    ops_header = opsim_util.assemble_instcat_header(ops_visit,
                                                         seed=args.seed,
                                                         exptime_=args.exptime,
                                                         filter_=args.filter)

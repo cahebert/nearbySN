@@ -78,6 +78,20 @@ if __name__ == '__main__':
 
     np.savetxt(args.catdir+f'imags_p{pair}.txt', out['imag'].to_numpy())
     
+    rubin_sim_util.make_inst_cat(out, 
+                                 header=header_1,
+                                 catdir=args.catdir, 
+                                 dust=args.dust, 
+                                 pair=pair,
+                                 randomize=args.randomize)
+
+    rubin_sim_util.make_inst_cat(out, 
+                                 header=header_2, 
+                                 catdir=args.catdir, 
+                                 dust=args.dust, 
+                                 pair=pair
+                                 randomize=args.randomize,
+                                 write_stars=False)
 
     # launch imsim for both
     # run alignment
