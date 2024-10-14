@@ -72,7 +72,7 @@ def get_opsim_visit_pair(GC_RA, GC_DEC, db_path):
     return db.loc[i_min].iloc[0], db.loc[i_min-1].iloc[0] #iloc to convert to series
 
 
-def assemble_instcat_header(visit, filter_=None, seed=None):
+def assemble_instcat_header(visit, exptime_=None, filter_=None, seed=None):
     
     column_conversion = {
                          'fieldRA' : 'rightascension',
@@ -96,7 +96,7 @@ def assemble_instcat_header(visit, filter_=None, seed=None):
     
     fixed_rows = {
                   'nsnap': 1,
-                  'vistime': 30.0,
+                  'vistime': exptime_ if exptime_ is not None else 15.0,
                   'seqnum': 0,
                   'filter': filter_ if filter_ is not None else 2,
                   'seed': seed if seed is not None else 398414,

@@ -144,7 +144,7 @@ def main(args):
     ops_visit = opsim_pointing.get_opsim_visit(ra, dec, args.db)
     ops_header = opsim_pointing.assemble_instcat_header(ops_visit,
                                                         seed=args.seed,
-                                                        exptime_=args.exptime
+                                                        exptime_=args.exptime,
                                                         filter_=args.filter)
     expid = "00"+str(int(ops_header["obshistid"]))
     
