@@ -75,6 +75,32 @@ def get_sed_info(star, etoiles, index, sed_path='/Users/clairealice/Documents/sh
     
     return magnorm, fname    
 
+
+def get_sed_info(star, etoiles, index, sed_path='/Users/clairealice/Documents/share/rubin_sim_data/sims_sed_library/'):
+    """Returns magnorm and path to file for SED of given star.
+    
+    star is dict or row of dataframe."""
+    import galsim
+    import astropy.units as u
+    import astropy.constants
+
+    sed_cols = ['logte','logg','logl','z']
+    sed = etoiles.get_intrinsic_sed(**star[sed_cols].to_dict())
+    sed = etoiles.convert_to_observed(sed, star['mu0'])
+
+    lams = np.linspace(sed.blue_limit, 1500, 2000)
+    fname = f'lsstsim_sample/nsn_sed_index{index}.txt'
+    with open(sed_path + fname, 'w+') as f:
+        f.writelines(f'{l} {f}\n' for l,f in zip(lams, sed._spec(lams)))
+
+    wl = 500*u.nm
+    hnu0 = (astropy.constants.h*astropy.constants.c)/wl
+    flambda0 = hnu0 * sed(wl.value) * (1./u.nm/u.cm**2/u.s)
+    fnu0 = flambda0 * wl**2 / astropy.constants.c
+    magnorm = fnu0.to_value(u.ABmag)
+    
+    return magnorm, fname    
+
 def make_inst_cat(df, header, catdir,  
                   magcut=True, randomize=True, 
                   dust=True, pair=None, write_stars=True):

@@ -93,6 +93,7 @@ if __name__ == '__main__':
                                  randomize=args.randomize,
                                  write_stars=False)
 
+
     # launch imsim for both
     # run alignment
     # check header for seeing
