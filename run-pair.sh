@@ -1,8 +1,11 @@
 #!/bin/bash
 
+# Want template image (first) to be the *smaller* seeing. 
+# Will be convolved to match the "science" image.
+
 # images can be input in any order; measure step determines which is "template"
 expid_1=$1
-expid_2=$2 
+expid_2=$2
 pair=$3
 
 datadir="/Users/clairealice/Documents/git/nearbySN/data/p$pair/"
@@ -50,7 +53,7 @@ expid_img=$expid_2
 
 sigma2="3.6"
 sigma4="1.75"
-sigma6="0.85"
+sigma6="0.80"
 
 # wahoo
 
@@ -71,19 +74,24 @@ maxv=30000
 # -r		16
 # -ng     3 6 $sigma6 4 $sigma4 2 $sigma2 \
 # -tr 10 -ir 10 \
-# -bgo 2 
+# -bgo 2
 # -nsx 8 -nsy 10 \
+# -gd     2000 2200 2000 2200 \
 
 ~/Documents/git/hotpants/hotpants \
--tmplim $datadir/eimage_$expid_tmp-0-r-R22_S11-det094_projected.fits \
--inim   $datadir/eimage_$expid_img-0-r-R22_S11-det094.fits \
--outim  $datadir/diffim_t$expid_tmp-i$expid_img-med.fits \
--gd     2300 3300 2300 3300 \
+-tmplim $datadir/eimage_$expid_tmp-0-r-R22_S11-det094_projected_CROPPED.fits \
+-inim   $datadir/eimage_$expid_img-0-r-R22_S11-det094_CROPPED.fits \
+-outim  $datadir/diffim_t$expid_tmp-i$expid_img.fits \
 -ng     3 6 $sigma6 4 $sigma4 2 $sigma2 \
 -tu     $maxv \
 -iu     $maxv \
 -r 		15 \
 -n 		t \
 -ft 	15 \
--ks 	2.5 
+-ks 	2.5  \
+-v    0 \
+-tl   10000 \
+-il   10000 \
+-nsx  2 \
+-nsy  2 
 

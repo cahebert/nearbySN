@@ -1,4 +1,6 @@
 import numpy as np
+import astropy.units as u
+import astropy.constants as constants
 
 def query_data_lab(index, N, indextype='nest4096',expid=None, magcut=None, save=False):
     """Fetch TRILEGAL positions and gmag for a given ra/dec region."""
@@ -33,7 +35,7 @@ def query_data_lab(index, N, indextype='nest4096',expid=None, magcut=None, save=
 
     return result
 
-def random_points_within_polygon(ra, dec, n_points):
+def random_points_within_polygon(ra, dec, n_points, seed=None):
     """Function to generate random points within RA/Dec area"""
     from shapely.geometry import Polygon, Point
 
@@ -47,8 +49,9 @@ def random_points_within_polygon(ra, dec, n_points):
     min_x, min_y, max_x, max_y = polygon.bounds
     positions = []
 
+    rng = np.rangom.default_rng(seed)
     while len(positions) < n_points:
-        random_point = Point(np.random.uniform(min_x, max_x), np.random.uniform(min_y, max_y))
+        random_point = Point(rng.uniform(min_x, max_x), rng.uniform(min_y, max_y))
         if polygon.contains(random_point):
             positions.append(random_point)
 
@@ -83,14 +86,41 @@ def save_summary(expid, df, header, args):
     with open(summary_f, 'a') as f:
         f.write(' '.join([str(s) for s in summary]) + '\n')
 
+# def get_sed_info(star, etoiles, index, sed_path='/Users/clairealice/Documents/share/rubin_sim_data/sims_sed_library/'):
+#     """Returns magnorm and path to file for SED of given star.
+
+#     star is dict or row of dataframe."""
+#     import galsim
+#     import astropy.units as u
+#     import astropy.constants
+
+#     sed_cols = ['logte','logg','logl','z']
+#     sed = etoiles.get_intrinsic_sed(**star[sed_cols].to_dict())
+#     sed = etoiles.convert_to_observed(sed, star['mu0'])
+
+#     lams = np.linspace(sed.blue_limit, 1500, 2000)
+#     fname = f'lsstsim_sample/nsn_sed_index{index}.txt'
+#     with open(sed_path + fname, 'w+') as f:
+#         f.writelines(f'{l} {f}\n' for l,f in zip(lams, sed._spec(lams)))
+
+#     wl = 500*u.nm
+#     hnu0 = (astropy.constants.h*astropy.constants.c)/wl
+#     flambda0 = hnu0 * sed(wl.value) * (1./u.nm/u.cm**2/u.s)
+#     fnu0 = flambda0 * wl**2 / astropy.constants.c
+#     magnorm = fnu0.to_value(u.ABmag)
+
+#     return magnorm, fname
+
+def get_magnorm(sed):
+    wl = 500*u.nm
+    hnu0 = (constants.h*constants.c)/wl
+    flambda0 = hnu0 * sed(wl.value) * (1./u.nm/u.cm**2/u.s)
+    fnu0 = flambda0 * wl**2 / constants.c
+    return fnu0.to_value(u.ABmag)
+
 def get_sed_info(star, etoiles, index, sed_path='/Users/clairealice/Documents/share/rubin_sim_data/sims_sed_library/'):
     """Returns magnorm and path to file for SED of given star.
-
     star is dict or row of dataframe."""
-    import galsim
-    import astropy.units as u
-    import astropy.constants
-
     sed_cols = ['logte','logg','logl','z']
     sed = etoiles.get_intrinsic_sed(**star[sed_cols].to_dict())
     sed = etoiles.convert_to_observed(sed, star['mu0'])
@@ -100,38 +130,7 @@ def get_sed_info(star, etoiles, index, sed_path='/Users/clairealice/Documents/sh
     with open(sed_path + fname, 'w+') as f:
         f.writelines(f'{l} {f}\n' for l,f in zip(lams, sed._spec(lams)))
 
-    wl = 500*u.nm
-    hnu0 = (astropy.constants.h*astropy.constants.c)/wl
-    flambda0 = hnu0 * sed(wl.value) * (1./u.nm/u.cm**2/u.s)
-    fnu0 = flambda0 * wl**2 / astropy.constants.c
-    magnorm = fnu0.to_value(u.ABmag)
-
-    return magnorm, fname
-
-
-def get_sed_info(star, etoiles, index, sed_path='/Users/clairealice/Documents/share/rubin_sim_data/sims_sed_library/'):
-    """Returns magnorm and path to file for SED of given star.
-    star is dict or row of dataframe."""
-    import galsim
-    import astropy.units as u
-    import astropy.constants
-
-    sed_cols = ['logte','logg','logl','z']
-    sed = etoiles.get_intrinsic_sed(**star[sed_cols].to_dict())
-    sed = etoiles.convert_to_observed(sed, star['mu0'])
-
-    lams = np.linspace(sed.blue_limit, 1500, 2000)
-    fname = f'lsstsim_sample/nsn_sed_index{index}.txt'
-    with open(sed_path + fname, 'w+') as f:
-        f.writelines(f'{l} {f}\n' for l,f in zip(lams, sed._spec(lams)))
-
-    wl = 500*u.nm
-    hnu0 = (astropy.constants.h*astropy.constants.c)/wl
-    flambda0 = hnu0 * sed(wl.value) * (1./u.nm/u.cm**2/u.s)
-    fnu0 = flambda0 * wl**2 / astropy.constants.c
-    magnorm = fnu0.to_value(u.ABmag)
-
-    return magnorm, fname
+    return get_magnorm(sed), fname
 
 def make_inst_cat(df, header, catdir,
                   magcut=True, randomize=True,
